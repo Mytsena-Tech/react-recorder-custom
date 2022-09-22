@@ -22,6 +22,7 @@ export default class AudioReactRecorder extends React.Component {
   }
 
   //TODO: add the props definitions
+  
   static propTypes = {
     state: PropTypes.string,
     type: PropTypes.string.isRequired,
@@ -29,8 +30,10 @@ export default class AudioReactRecorder extends React.Component {
     foregroundColor: PropTypes.string,
     canvasWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     canvasHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-
+    inputDevice: PropTypes.string,
+   
     //method calls
+    onError: PropTypes.func,
     onStop: PropTypes.func
   }
   static defaultProps = {
@@ -105,13 +108,20 @@ export default class AudioReactRecorder extends React.Component {
       navigator.mozGetUserMedia
   }
 
+
   //get mic stream
-  getStream = (constraints) => {
-    if (!constraints) {
-      constraints = { audio: true, video: false }
+  getStream = () => {
+    let device = this.props.inputDevice
+
+    if(!device){
+      device = { audio: true, video: false }
+    }else{
+      device = { audio: { deviceId: device }, video: false }
     }
 
-    return navigator.mediaDevices.getUserMedia(constraints)
+    console.log("My audio input device:", device)
+
+    return navigator.mediaDevices.getUserMedia(device)
   }
 
   setUpRecording = () => {
@@ -261,12 +271,16 @@ export default class AudioReactRecorder extends React.Component {
 
   setupMic = async () => {
     //TODO: only get stream after clicking start
+    const onError = this.props.onError
     try {
       window.stream = this.stream = await this.getStream()
       //TODO: on got stream
-    } catch (err) {
+    } catch (error) {
       //TODO: error getting stream
-      console.log('Error: Issue getting mic', err)
+
+      if(onError){
+        onError({ error: error })
+      }
     }
 
     this.setUpRecording()
